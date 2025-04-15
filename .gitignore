@@ -1,0 +1,47 @@
+# Python bytecode
+*.pyc
+*.pyo
+__pycache__
+
+# Virtual environment folder
+venv/
+ENV/
+env/
+.venv/
+
+# Flask instance folder
+instance/
+
+# Flask configuration files
+.env
+*.env
+
+# Database
+*.sqlite
+*.db
+*.db-journal
+
+# Logs
+*.log
+
+# pycharm files
+.idea/
+
+# VS Code files
+.vscode/
+
+# MacOS Finder
+.DS_Store
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+
+# pytest cache
+.cache/
+
+# Coverage directory used by pytest
+.coverage
+.coverage.*
+nosetests.xml
+pytest-debug.log
