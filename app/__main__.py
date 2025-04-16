@@ -3,11 +3,15 @@ import pandas as pd
 import pickle
 from flask_jwt_extended import JWTManager, jwt_required
 import os
+from dotenv import load_dotenv  # Untuk memuat environment variable dari file .env
+
+# Memuat .env file
+load_dotenv()
 
 # Inisialisasi Flask dan JWT
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-jwt-secret-key')  # Ganti dengan kunci rahasia yang lebih aman
-jwt = JWTManager(app)
+JWTManager(app)
 
 # Load model terbaik (pipeline lengkap) dari file
 with open('model/best_random_forest_model.pkl', 'rb') as file:
@@ -45,5 +49,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+# Menjalankan aplikasi
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
