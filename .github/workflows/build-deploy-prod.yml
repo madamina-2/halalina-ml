@@ -1,0 +1,49 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:prod .
+
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:prod
+
+  deploy:
+    name: Pull and Run on VPS (Prod)
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+      - name: Stop and Remove Old Container
+        run: |
+          docker stop halalina-ml-prod || true
+          docker rm halalina-ml-prod || true
+
+      - name: Pull Latest Image
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:prod
+
+      - name: Run New Container
+        run: |
+          docker run -d \
+            --name halalina-ml-prod \
+            -p 5501:5001 \
+            --env-file ~/halalina-ml/.env.prod \
+            --network halalina-prod-network \
+            --restart unless-stopped \
+            ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:prod
