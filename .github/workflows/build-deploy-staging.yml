@@ -44,6 +44,6 @@ jobs:
             --name halalina-ml-staging \
             --env-file ~/halalina-ml/.env.staging \
             --network halalina-staging-network \
-            -p 5002:5002 \
+            -p 5502:5001 \
             --restart unless-stopped \
             ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:staging

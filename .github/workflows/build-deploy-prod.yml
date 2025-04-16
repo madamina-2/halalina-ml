@@ -42,7 +42,7 @@ jobs:
         run: |
           docker run -d \
             --name halalina-ml-prod \
-            -p 5003:5002 \
+            -p 5501:5001 \
             --env-file ~/halalina-ml/.env.prod \
             --network halalina-prod-network \
             --restart unless-stopped \
