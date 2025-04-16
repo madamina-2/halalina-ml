@@ -36,7 +36,7 @@ jobs:
           docker rm halalina-ml-staging || true
 
       - name: Pull Latest Image
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/halalina-service:staging
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:staging
 
       - name: Run New Container
         run: |
