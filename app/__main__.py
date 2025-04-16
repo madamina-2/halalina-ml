@@ -4,6 +4,7 @@ import pickle
 from flask_jwt_extended import JWTManager, jwt_required
 import os
 from dotenv import load_dotenv  # Untuk memuat environment variable dari file .env
+from flask_cors import CORS  # Importing CORS
 
 # Memuat .env file
 load_dotenv()
@@ -12,6 +13,9 @@ load_dotenv()
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-jwt-secret-key')  # Ganti dengan kunci rahasia yang lebih aman
 JWTManager(app)
+
+# Enable CORS for all origins
+CORS(app, resources={r"/*": {"origins": ["http://127.0.0.1:5002", "http://192.168.23.169:5002"]}})  # This will allow all origins to access your API
 
 # Load model terbaik (pipeline lengkap) dari file
 with open('model/best_random_forest_model.pkl', 'rb') as file:
