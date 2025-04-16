@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import numpy as np
 import pandas as pd
 import pickle
 from flask_jwt_extended import JWTManager, jwt_required
@@ -42,11 +43,79 @@ def predict():
 
         # Jika ingin probabilitas per kelas
         proba = loaded_model.predict_proba(new_data)
+        
+
+        # Mapping klaster ke profil risiko
+        risk_profiles = {
+            0: "Agresif",
+            1: "Moderat",
+            2: "Defensif"
+        }
+
+        # Base model alokasi portofolio (persentase) untuk masing-masing profil
+        base_allocations = { 
+            "Agresif": {
+                "Tabungan Emas": 0.40,
+                "SBSN": 0.30,
+                "RDPU Syariah": 0.20,
+                "Deposito Syariah": 0.10
+            },
+            "Moderat": {
+                "Tabungan Emas": 0.25,
+                "SBSN": 0.35,
+                "RDPU Syariah": 0.25,
+                "Deposito Syariah": 0.15
+            },
+            "Defensif": {
+                "Tabungan Emas": 0.05,
+                "SBSN": 0.40,
+                "RDPU Syariah": 0.30,
+                "Deposito Syariah": 0.25
+            }
+        }
+
+        # Ambil probabilitas per kelas dari model
+        proba_scores = np.array(proba).flatten()
+
+        # Hitung total alokasi berbobot dari semua base model dikalikan proba
+        final_allocation = {
+            "Tabungan Emas": 0.0,
+            "SBSN": 0.0,
+            "RDPU Syariah": 0.0,
+            "Deposito Syariah": 0.0
+        }
+
+        # Bobot: proba[0] = agresif, proba[1] = moderat, proba[2] = defensif
+        for i, profile in enumerate(["Agresif", "Moderat", "Defensif"]):
+            for product in final_allocation:
+                final_allocation[product] += base_allocations[profile][product] * proba_scores[i]
+
+        # Konversi ke persen (float)
+        percent_values = {k: v * 100 for k, v in final_allocation.items()}
+
+        # Simpan pembulatan ke bawah dan sisa desimal
+        floored = {k: int(v) for k, v in percent_values.items()}
+        remainders = {k: percent_values[k] - floored[k] for k in percent_values}
+
+        # Hitung total awal dan selisih
+        total_floored = sum(floored.values())
+        diff = 100 - total_floored
+
+        # Urutkan berdasarkan sisa desimal terbesar → tambahkan 1 ke elemen tersebut hingga total = 100
+        sorted_remainders = sorted(remainders.items(), key=lambda x: x[1], reverse=True)
+
+        # Tambahkan 1 ke elemen yang sisa desimalnya terbesar
+        for i in range(diff):
+            floored[sorted_remainders[i][0]] += 1
+
+        # Tampilkan hasil
+        predicted_cluster = int(prediction[0])
+        risk_profile = risk_profiles[predicted_cluster]
 
         # Kembalikan response dalam bentuk JSON
         response = {
-            "prediction": prediction.tolist(),
-            "confidence_scores": proba.tolist()
+            "risk_profile": risk_profile,
+            "floored_percentages": floored 
         }
         return jsonify(response), 200
 
