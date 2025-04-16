@@ -1,0 +1,49 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - development
+
+jobs:
+  build:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:staging .
+
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:staging
+
+  deploy:
+    name: Pull and Run on VPS (Staging)
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+      - name: Stop and Remove Old Container
+        run: |
+          docker stop halalina-ml-staging || true
+          docker rm halalina-ml-staging || true
+
+      - name: Pull Latest Image
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/halalina-service:staging
+
+      - name: Run New Container
+        run: |
+          docker run -d \
+            --name halalina-ml-staging \
+            --env-file ~/halalina-ml/.env.staging \
+            --network halalina-staging-network \
+            -p 5002:5002 \
+            --restart unless-stopped \
+            ${{ secrets.DOCKERHUB_USERNAME }}/halalina-ml:staging
