@@ -1,9 +1,10 @@
 version: '3.8'
 services:
-  halalina-ml:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: halalina-ml
     ports:
       - "5001:5001"
     environment:
